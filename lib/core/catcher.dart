@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:isolate';
 
+import 'package:android_id/android_id.dart';
 import 'package:catcher/core/application_profile_manager.dart';
 import 'package:catcher/core/catcher_screenshot_manager.dart';
 import 'package:catcher/mode/report_mode_action_confirmed.dart';
@@ -263,9 +264,14 @@ class Catcher with ReportModeAction {
         _removeExcludedParameters();
       });
     } else if (ApplicationProfileManager.isAndroid()) {
-      deviceInfo.androidInfo.then((androidInfo) {
-        _loadAndroidParameters(androidInfo);
-        _removeExcludedParameters();
+      final androidIdPlugin = AndroidId();
+      androidIdPlugin.getId().then((id) {
+        _deviceParameters["androidId"] = id;
+      }).whenComplete(() {
+        deviceInfo.androidInfo.then((androidInfo) {
+          _loadAndroidParameters(androidInfo);
+          _removeExcludedParameters();
+        });
       });
     } else if (ApplicationProfileManager.isIos()) {
       deviceInfo.iosInfo.then((iosInfo) {
@@ -352,10 +358,11 @@ class Catcher with ReportModeAction {
     }
   }
 
-  void _loadAndroidParameters(AndroidDeviceInfo androidDeviceInfo) {
+  void _loadAndroidParameters(
+    AndroidDeviceInfo androidDeviceInfo,
+  ) {
     try {
       _deviceParameters["id"] = androidDeviceInfo.id;
-      _deviceParameters["androidId"] = androidDeviceInfo.androidId;
       _deviceParameters["board"] = androidDeviceInfo.board;
       _deviceParameters["bootloader"] = androidDeviceInfo.bootloader;
       _deviceParameters["brand"] = androidDeviceInfo.brand;
